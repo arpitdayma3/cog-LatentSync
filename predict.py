@@ -9,14 +9,14 @@ import uuid
 import sys
 
 MODEL_CACHE = "checkpoints"
-MODEL_URL = "https://weights.replicate.delivery/default/chunyu-li/LatentSync/model.tar"
+# MODEL_URL = "https://weights.replicate.delivery/default/chunyu-li/LatentSync/model.tar"
 
-def download_weights(url, dest):
-    start = time.time()
-    print("downloading url: ", url)
-    print("downloading to: ", dest)
-    subprocess.check_call(["pget", "-xf", url, dest], close_fds=False)
-    print("downloading took: ", time.time() - start)
+# def download_weights(url, dest):
+#     start = time.time()
+#     print("downloading url: ", url)
+#     print("downloading to: ", dest)
+#     subprocess.check_call(["pget", "-xf", url, dest], close_fds=False)
+#     print("downloading took: ", time.time() - start)
 
 class Predictor(BasePredictor):
     test_inputs = {
@@ -27,8 +27,8 @@ class Predictor(BasePredictor):
     def setup(self) -> None:
         """Load the model into memory to make running multiple predictions efficient"""
         # Download the model weights
-        if not os.path.exists(MODEL_CACHE):
-            download_weights(MODEL_URL, MODEL_CACHE)
+        # if not os.path.exists(MODEL_CACHE):
+        #     download_weights(MODEL_URL, MODEL_CACHE)
 
         # Soft links for the auxiliary models
         os.system("mkdir -p ~/.cache/torch/hub/checkpoints")
@@ -49,6 +49,9 @@ class Predictor(BasePredictor):
         ),
         seed: int = Input(
             description="Set to 0 for Random seed", default=0
+        ),
+        inference_steps: int = Input( # Add this parameter
+            description="Number of inference steps", ge=1, default=20
         )
     ) -> Path:
         """Run a single prediction on the model"""
@@ -84,7 +87,8 @@ class Predictor(BasePredictor):
             "--video_path", video_path,
             "--audio_path", audio_path,
             "--video_out_path", unique_output_path,
-            "--seed", str(seed)
+            "--seed", str(seed),
+            "--inference_steps", str(inference_steps) # Add this line
         ]
 
         try:
